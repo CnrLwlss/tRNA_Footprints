@@ -2,3 +2,5 @@
 *.fastq
 *.sam
 *.bam
+*.gz
+*.wig
