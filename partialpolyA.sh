@@ -4,6 +4,7 @@
 # pip3 install cutadapt
 # Install SRA toolkit:
 # https://github.com/ncbi/sra-tools/wiki/HowTo:-Binary-Installation
+# Don't be tempted to apt-get install sra-tools.  That version is broken.
 
 root='SRR935452'
 #root='SRR935453'
