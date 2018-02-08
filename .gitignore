@@ -1,6 +1,10 @@
 *.tar
 *.fastq
+*.fa
 *.sam
 *.bam
 *.gz
 *.wig
+tmp.out
+mtDNA
+hgRNA
