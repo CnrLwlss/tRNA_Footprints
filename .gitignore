@@ -5,6 +5,12 @@
 *.bam
 *.gz
 *.wig
+*.bai
+*.fai
+*.gff3
+*.zip
+*.sai
+wget*
 tmp.out
 mtDNA
 hgRNA
