@@ -10,6 +10,7 @@
 *.gff3
 *.zip
 *.sai
+*.xml
 wget*
 tmp.out
 mtDNA

@@ -62,22 +62,18 @@ do
 	
 	# Cut approriate adapter sequences
 	#cutadapt -a ${adapt} -O 12 -m 20 -j 22 ${root}.fastq -o ${root}_trimmed.fastq
+	
+	# Drop all reads that do not end in AAAAA
+	#awk 'BEGIN {OFS = "\n"} {header = $0 ; getline seq ; getline qheader ; getline qseq ; if(seq ~ /[A]{5,15}$/){tailstart = match(seq, /[A]{5,15}$/); print header, substr(seq,0,tailstart-1), qheader, substr(qseq,0,tailstart-1)}}' < ${root}_trimmed.fastq > ${root}_filtered.fastq
 
 	# Align reads to decoy Trna/Rrna from nuclear and MT genome
-	bowtie2 -p 22 --local -D20 -R 10 -N 1 -L 20 -i C,1 --un ${root}_screened.fastq -x hgRNA/hgRNA -U ${root}_trimmed.fastq -S ${root}_screened_out.sam
+	bowtie2 -p 22 -D20 -R 10 -N 1 -L 20 -i C,1 --un ${root}_screened.fastq -x hgRNA/hgRNA -U ${root}_filtered.fastq -S ${root}_screened_out.sam
 
 	# Align to mitochondrial genome
-	bowtie2 -p 22 --local -D20 -R 10 -N 1 -L 20 -i C,1 -x mtDNA/mtDNA -U ${root}_screened.fastq -S ${root}_aligned_mito.sam
+	bowtie2 -p 22 -D20 -R 10 -N 1 -L 20 -i C,1 -x mtDNA/mtDNA -U ${root}_screened.fastq -S ${root}_aligned_mito.sam
 
 	# Filter out unaligned reads, secondary alignments, aligned reads with 0 quality and sort.
-	samtools view -Sb ${root}_aligned_mito.sam -u| samtools view -f 0 -q 1 - -u|samtools sort - -f ${root}_aligned_mito_mapped.bam
-	
-	# Find partial polyA tails: read alignments ending with AAAAA
-	samtools view -H ${root}_aligned_mito_mapped.bam > ${root}_header.sam
-	samtools view ${root}_aligned_mito_mapped.bam|awk '($10~/AAAAA$/ && $2~/^0$/)||($10~/^TTTTT/ && $2~/^16$/)||($1~/^@/){print}' > ${root}_polyA.sam
-	cat ${root}_header.sam ${root}_polyA.sam > ${root}_polyA_header.sam
-	
-	samtools view -S -b ${root}_polyA_header.sam > ${root}_polyA_header.bam
+	samtools view -Sb ${root}_aligned_mito.sam -u| samtools view -f 0 -q 1 - -u|samtools sort - -f ${root}_polyA_header.bam
 	samtools index ${root}_polyA_header.bam ${root}_polyA_header.bai
 	
 done
