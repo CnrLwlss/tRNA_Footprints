@@ -55,9 +55,9 @@ for root in ['ERR2208504','ERR2208505','ERR2208506','ERR2208507','ERR2208508','S
                 fields = line.rstrip().split("\t")
                 seq = readict[fields[0]]["seq"]
                 qual = readict[fields[0]]["qual"]
-                if fields[1] == 16: # Aligned to reverse strand
+                if fields[1] == '16': # Aligned to reverse strand
                     seq = rev_comp(seq)
-                    qual = reversed(qual)
+                    qual = qual[::-1]
                 fields[9] =  seq
                 fields[10] = qual
                 samout.write("\t".join(fields)+"\n")
