@@ -11,9 +11,15 @@
 # Data from Rooijers et al. (2013)
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE48933
 
-ERRs=('ERR2208504' 'ERR2208505') # 	control osteosarcoma 143B, control normal HEK293T
+#ERRs=('ERR2208504' 'ERR2208505') # 	control osteosarcoma 143B, control normal HEK293T
+ERRs=('ERR2208506','ERR2208507','ERR2208508') # mitochondrial disease
 SRRs=('SRR935452' 'SRR935453') # Cybrid control RP rep1, Cybrid control RP rep2
-roots=("${ERRs[@]}" "${SRRs[@]}")
+#roots=("${ERRs[@]}" "${SRRs[@]}")
+roots=("${ERRs[@]}")
+
+#wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR220/006/ERR2208506/ERR2208506.fastq.gz &
+#wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR220/007/ERR2208507/ERR2208507.fastq.gz &
+#wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR220/008/ERR2208508/ERR2208508.fastq.gz &
 
 adapt_Short='TCGTATGCCGTCTTCTGCTTG'
 adapt_Long='TGGAATTCTCGGGTGCCAAGGAACTCCAGTCACATCACGATCTCGTATGCCGTCTTCTGCTTG'
@@ -56,15 +62,15 @@ do
 	
 	if [[ " ${ERRs[@]} " =~ " ${root} " ]]; then
 	  echo ${root}
-	  #wget -c 'ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR220/005/${root}/${root}.fastq.gz'
+	  #wget -c 'ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR220/005/${root}/${root}.fastq.gz' # URL building slightly wrong (not all 005)
 	  #gunzip ${root}.fastq.gz
 	fi
 	
 	# Cut approriate adapter sequences
-	#cutadapt -a ${adapt} -O 12 -m 20 -j 22 ${root}.fastq -o ${root}_trimmed.fastq
+	cutadapt -a ${adapt} -O 12 -m 20 -j 22 ${root}.fastq -o ${root}_trimmed.fastq
 	
 	# Drop all reads that do not end in AAAAA
-	#awk 'BEGIN {OFS = "\n"} {header = $0 ; getline seq ; getline qheader ; getline qseq ; if(seq ~ /[A]{5,15}$/){tailstart = match(seq, /[A]{5,15}$/); print header, substr(seq,0,tailstart-1), qheader, substr(qseq,0,tailstart-1)}}' < ${root}_trimmed.fastq > ${root}_filtered.fastq
+	awk 'BEGIN {OFS = "\n"} {header = $0 ; getline seq ; getline qheader ; getline qseq ; if(seq ~ /[A]{5,15}$/){tailstart = match(seq, /[A]{5,15}$/); print header, substr(seq,0,tailstart-1), qheader, substr(qseq,0,tailstart-1)}}' < ${root}_trimmed.fastq > ${root}_filtered.fastq
 
 	# Align reads to decoy Trna/Rrna from nuclear and MT genome
 	bowtie2 -p 22 -D20 -R 10 -N 1 -L 20 -i C,1 --un ${root}_screened.fastq -x hgRNA/hgRNA -U ${root}_filtered.fastq -S ${root}_screened_out.sam
