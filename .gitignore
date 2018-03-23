@@ -11,6 +11,7 @@
 *.zip
 *.sai
 *.xml
+*.ids
 wget*
 tmp.out
 mtDNA

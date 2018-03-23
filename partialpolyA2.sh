@@ -11,11 +11,11 @@
 # Data from Rooijers et al. (2013)
 # https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE48933
 
-#ERRs=('ERR2208504' 'ERR2208505') # 	control osteosarcoma 143B, control normal HEK293T
-ERRs=('ERR2208506','ERR2208507','ERR2208508') # mitochondrial disease
+ERRctrl=('ERR2208504' 'ERR2208505') # 	control osteosarcoma 143B, control normal HEK293T
+ERRpatient=('ERR2208506' 'ERR2208507' 'ERR2208508') # mitochondrial disease
 SRRs=('SRR935452' 'SRR935453') # Cybrid control RP rep1, Cybrid control RP rep2
-#roots=("${ERRs[@]}" "${SRRs[@]}")
-roots=("${ERRs[@]}")
+#roots=("${ERRctrl[@]}" "${SRRs[@]}")
+roots=("${ERRctrl[@]}" "${ERRpatient[@]}" "${SRRs[@]}")
 
 #wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR220/006/ERR2208506/ERR2208506.fastq.gz &
 #wget -c ftp://ftp.sra.ebi.ac.uk/vol1/fastq/ERR220/007/ERR2208507/ERR2208507.fastq.gz &
@@ -81,5 +81,6 @@ do
 	# Filter out unaligned reads, secondary alignments, aligned reads with 0 quality and sort.
 	samtools view -Sb ${root}_aligned_mito.sam -u| samtools view -f 0 -q 1 - -u|samtools sort - -f ${root}_polyA_header.bam
 	samtools index ${root}_polyA_header.bam ${root}_polyA_header.bai
+	samtools view ${root}_polyA_header.bam > ${root}_polyA_header.sam
 	
 done
