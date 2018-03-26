@@ -66,12 +66,13 @@ do
 	  #gunzip ${root}.fastq.gz
 	fi
 	
-	# Cut approriate adapter sequences
-	cutadapt -a ${adapt} -O 12 -m 20 -j 22 ${root}.fastq -o ${root}_trimmed.fastq
+	# Cut appropriate adapter sequences
+	#cutadapt -a ${adapt} -O 12 -m 20 -j 22 ${root}.fastq -o ${root}_trimmed.fastq
 	
 	# Drop all reads that do not end in AAAAA
-	awk 'BEGIN {OFS = "\n"} {header = $0 ; getline seq ; getline qheader ; getline qseq ; if(seq ~ /[A]{5,15}$/){tailstart = match(seq, /[A]{5,15}$/); print header, substr(seq,0,tailstart-1), qheader, substr(qseq,0,tailstart-1)}}' < ${root}_trimmed.fastq > ${root}_filtered.fastq
-
+	#awk 'BEGIN {OFS = "\n"} {header = $0 ; getline seq ; getline qheader ; getline qseq ; if(seq ~ /[A]{5,15}$/){tailstart = match(seq, /[A]{5,15}$/); print header, substr(seq,0,tailstart-1), qheader, substr(qseq,0,tailstart-1)}}' < ${root}_trimmed.fastq > ${root}_filtered.fastq
+	python rebuildPolyA.py -f ${root}
+	
 	# Align reads to decoy Trna/Rrna from nuclear and MT genome
 	bowtie2 -p 22 -D20 -R 10 -N 1 -L 20 -i C,1 --un ${root}_screened.fastq -x hgRNA/hgRNA -U ${root}_filtered.fastq -S ${root}_screened_out.sam
 
@@ -79,8 +80,10 @@ do
 	bowtie2 -p 22 -D20 -R 10 -N 1 -L 20 -i C,1 -x mtDNA/mtDNA -U ${root}_screened.fastq -S ${root}_aligned_mito.sam
 
 	# Filter out unaligned reads, secondary alignments, aligned reads with 0 quality and sort.
-	samtools view -Sb ${root}_aligned_mito.sam -u| samtools view -f 0 -q 1 - -u|samtools sort - -f ${root}_polyA_header.bam
+	samtools view -Sb  ${root}_aligned_mito.sam -u| samtools view -h -f 0 -q 1 - >  ${root}_unsorted.sam
+	python rebuildPolyA.py -r ${root}
+	samtools view -Sb ${root}_unsorted_fullreads.sam -u|samtools sort - -f ${root}_polyA_header.bam
+	samtools view -h ${root}_polyA_header.bam > ${root}_polyA_header.sam
 	samtools index ${root}_polyA_header.bam ${root}_polyA_header.bai
-	samtools view ${root}_polyA_header.bam > ${root}_polyA_header.sam
 	
 done

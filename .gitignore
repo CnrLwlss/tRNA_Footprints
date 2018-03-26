@@ -12,6 +12,7 @@
 *.sai
 *.xml
 *.ids
+*.pileup
 wget*
 tmp.out
 mtDNA
