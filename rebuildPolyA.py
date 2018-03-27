@@ -1,6 +1,7 @@
 import subprocess
 from itertools import islice
 import pandas as pd
+pd.options.mode.chained_assignment = None  # default='warn'
 
 def rev_comp(seq):
     complement = {'A': 'T', 'C': 'G', 'G': 'C', 'T': 'A'}
@@ -70,10 +71,14 @@ def rebuild(root):
                     seq = rev_comp(seq)
                     qual = qual[::-1]
                     offset = -1*(len(seq)-len(fields[9]))
-                fields[3] = str(int(fields[3]) + offset)
-                fields[9] =  seq
-                fields[10] = qual
-                fields[5] = str(len(qual))+"M" # Assume all matches...
+                newstart = int(fields[3]) + offset
+                if newstart>0:
+                    fields[3] = str(newstart)
+                    fields[9] =  seq
+                    fields[10] = qual
+                    fields[5] = str(len(qual))+"M" # Assume all matches...
+                else:
+                    print("Warning, read runs off end of region.  Not adding polyA: "+fields[0])
                 samout.write("\t".join(fields)+"\n")
     samout.close()
 
@@ -120,28 +125,59 @@ def getattr(attr,key="Name"):
     atdict = parseattr(attr)
     return(atdict[key])
 
-##if __name__ == "__main__":
-##    from sys import argv
-##    myargs = getopts(argv)
-##    if '-r' in myargs:
-##        root = myargs['-r']
-##        rebuild(root)
-##    if '-f' in myargs:
-##        root = myargs['-f']
-##        justpolyA(root)    
-##    if '-a' in myargs:
-##        roots = ['ERR2208504','ERR2208505','ERR2208506','ERR2208507','ERR2208508','SRR935452','SRR935453']
-##        for root in roots:
-##            justpolyA(root)
-##            rebuild(root)
-##            
-root = 'ERR2208504'
-gff3 = 'mtDNA_stop.gff3'
-pu = pd.read_csv(root+'_polyA.pileup',sep="\t",header=None,names=["Genome","Coordinate","RefBase","Coverage","ReadQual","AlignQual","Start","End"])
-gf = pd.read_csv(gff3,skiprows=2,sep="\t",header=None,names=["Sequence","Source","Feature","Start","End","Score","Strand","Phase","Attributes"])
-gfg = gf[gf.Feature=='gene']
-gfg["Gname"]=[getattr(attr) for attr in gfg.Attributes]
+def getstop(gff):
+    if gff.Strand=="+":
+        firstcoord = gff.End-2
+    else:
+        firstcoord = gff.Start
+    return(firstcoord)
 
+if __name__ == "__main__":
+    from sys import argv
+    myargs = getopts(argv)
+    if '-r' in myargs:
+        root = myargs['-r']
+        rebuild(root)
+    if '-f' in myargs:
+        root = myargs['-f']
+        justpolyA(root)    
+    if '-a' in myargs:
+        roots = ['ERR2208504','ERR2208505','ERR2208506','ERR2208507','ERR2208508','SRR935452','SRR935453']
+        for root in roots:
+            justpolyA(root)
+            rebuild(root)
+            
+    roots = ['ERR2208504','ERR2208505','ERR2208506','ERR2208507','ERR2208508','SRR935452','SRR935453']
+    gff3 = 'mtDNA.gff3'
+    pus = {root:pd.read_csv(root+'_polyA.pileup',sep="\t",header=None,names=["Genome","Coordinate","RefBase","Coverage","ReadQual","AlignQual","Start","End"]) for root in roots}
+    gf = pd.read_csv(gff3,skiprows=2,sep="\t",header=None,names=["Sequence","Source","Feature","Start","End","Score","Strand","Phase","Attributes"])
+    N = int(gf.End[gf.Feature=="region"])
+    coverage = pd.DataFrame(columns=roots)
+    
+    for root in roots:
+        covs = [0 for i in range(0,N-1)]
+        for i,g in pus[root].iterrows():
+            covs[g.Coordinate]=g.Coverage
+        coverage[root]=covs
+
+    totals={}
+    for root in roots:
+        totals[root] = sum(1 for line in open(root+'_polyA_header.sam'))-3
+
+    gfg = gf[gf.Feature=='gene']
+    gfg["Gname"] = [getattr(attr) for attr in gfg.Attributes]
+    gfg["FirstStop"] = [getstop(g) for i,g in gfg.iterrows()]
+
+    summary = {}
+    for i,g in gfg.iterrows():
+        fs = int(g.FirstStop)
+        summary[g.Gname] = coverage[fs:(fs+3)].median()
+
+    res = pd.DataFrame(summary)
+    perc = 100*res.divide(pd.Series(totals),axis=0)
+    res["Total"]=pd.Series(totals)
+    res.to_csv("polyA_Counts.txt",sep="\t")
+    perc.to_csv("polyA_Percentages.txt",sep="\t")
 
 
     
