@@ -33,9 +33,9 @@ sums = colSums(df[,3:length(names(df))])
 print(sums)
 
 df_frac = df
-df_frac[,3:length(names(df))] = sweep(df[,3:length(names(df))],MARGIN=2,FUN="/",STATS=counts)
+df_frac[,3:length(names(df))] = 100*sweep(df[,3:length(names(df))],MARGIN=2,FUN="/",STATS=counts)
 
-pdf("GeneCoverages.pdf",width=11.69,height=8.27,pointsize=16)
+pdf("GeneCoverages.pdf",width=11.69,height=8.27,pointsize=20)
 
 for(g in 1:length(genes$gene)){
 
@@ -54,6 +54,79 @@ for(g in 1:length(genes$gene)){
 }
 
 dev.off()
+
+pdf("PatientGeneCoverages.pdf",width=11.69,height=8.27,pointsize=20)
+samps = names(coverage[1:2])
+cols = c("black","red")
+typs = c(1,1)
+names(cols) = samps
+names(typs) = names(cols)
+for(g in 1:length(genes$gene)){
+
+  #g = which(genes$gene=="COX3")
+  gene = genes$gene[g]
+  start = genes$start[g]
+  end = genes$end[g]
+  dfg = df_frac[start:end,]
+  maxfrac = max(dfg[,samps])
+
+  plot(NULL,xlim=c(start,end),ylim=c(0,maxfrac),xlab="Chromosome coordinate",ylab="Coverage (% aligned poly(A) reads)",main=gene)
+  for(c in samps){
+    points(dfg$Coordinate,dfg[[c]],lwd=2,type="l",col = cols[c],lty = typs[c])
+  }
+  legend("top",col=cols,legend=samps,lwd=2)
+}
+
+dev.off()
+
+pdf("ControlGeneCoverages.pdf",width=11.69,height=8.27,pointsize=20)
+samps = names(coverage[3:5])
+cols = c("black","red","blue")
+typs = c(1,1,1)
+names(cols) = samps
+names(typs) = names(cols)
+for(g in 1:length(genes$gene)){
+
+  #g = which(genes$gene=="COX3")
+  gene = genes$gene[g]
+  start = genes$start[g]
+  end = genes$end[g]
+  dfg = df_frac[start:end,]
+  maxfrac = max(dfg[,samps])
+
+  plot(NULL,xlim=c(start,end),ylim=c(0,maxfrac),xlab="Chromosome coordinate",ylab="Coverage (% aligned poly(A) reads)",main=gene)
+  for(c in samps){
+    points(dfg$Coordinate,dfg[[c]],lwd=2,type="l",col = cols[c],lty = typs[c])
+  }
+  legend("top",col=cols,legend=samps,lwd=2)
+}
+
+dev.off()
+
+pdf("CybridGeneCoverages.pdf",width=11.69,height=8.27,pointsize=20)
+samps = names(coverage[6:7])
+cols = c("black","red")
+typs = c(1,1)
+names(cols) = samps
+names(typs) = names(cols)
+for(g in 1:length(genes$gene)){
+
+  #g = which(genes$gene=="COX3")
+  gene = genes$gene[g]
+  start = genes$start[g]
+  end = genes$end[g]
+  dfg = df_frac[start:end,]
+  maxfrac = max(dfg[,samps])
+
+  plot(NULL,xlim=c(start,end),ylim=c(0,maxfrac),xlab="Chromosome coordinate",ylab="Coverage (% aligned poly(A) reads)",main=gene)
+  for(c in samps){
+    points(dfg$Coordinate,dfg[[c]],lwd=2,type="l",col = cols[c],lty = typs[c])
+  }
+  legend("top",col=cols,legend=samps,lwd=2)
+}
+
+dev.off()
+
 
 
 
